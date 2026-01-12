@@ -1,0 +1,47 @@
+name: Build Jarvis STI Android
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📦 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+
+      - name: 📥 Install Dependencies
+        run: npm install
+
+      - name: 🏗️ Build Web (index.html → www)
+        run: npm run build
+
+      - name: 🔄 Capacitor Sync
+        run: npx cap sync android
+
+      - name: ☕ Setup Java (Android)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: 🤖 Build Android APK (Debug)
+        run: |
+          cd android
+          ./gradlew assembleDebug
+
+      - name: 📤 Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: jarvis-sti-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
